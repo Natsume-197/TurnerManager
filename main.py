@@ -1,7 +1,7 @@
 import sys
 from PyQt5.QtWidgets import QMessageBox, QApplication , QTabWidget, QProgressBar, QFrame, QPlainTextEdit, QDateEdit, QPushButton, QLabel, QGridLayout, QApplication, QWidget, QCheckBox, QHBoxLayout, QVBoxLayout
 from PyQt5.QtCore import Qt, QDateTime, QCoreApplication
-from PyQt5.QtGui import QFont
+from PyQt5.QtGui import QFont, QIcon
 import requests
 import pandas as pd
 import os 
@@ -38,7 +38,7 @@ class MyApp(QWidget):
         super().__init__()
         self.setWindowTitle('Gestor de logs (Turner)')
         self.setFixedSize(600, 700)
-        
+        self.setWindowIcon(QIcon('favicon.ico'))
         layout = QGridLayout()
         self.setLayout(layout)
         
@@ -48,7 +48,7 @@ class MyApp(QWidget):
         self.tabs.resize(300,200)
         
         self.tabs.addTab(self.tab1,"Diarios")
-        self.tabs.addTab(self.tab2,"Mensuales")
+        # self.tabs.addTab(self.tab2,"Mensuales")
                 
         # Create first tab
         self.tab1.layout = QGridLayout(self)
@@ -276,7 +276,12 @@ class MyApp(QWidget):
             request = self.generate_request_dailylog(federation_code)
             path = self.save_excel_request(request, federation_code)
             filtered_data = self.check_excel_data(path)
-            file_path = self.save_excel(filtered_data, f'{file_path}.xlsx')
+            try:
+                file_path = self.save_excel(filtered_data, f'{file_path}.xlsx')
+            except Exception as e:
+                print(e)
+                self.show_info_messagebox("warning" ,"No se ha podido guardar/actualizar el archivo con ruta: "+file_path+". Verifique que el archivo no este abierto y/o tenga permisos.")
+
             collection_path.append(file_path)
             aux += 1
             self.pbar.setValue(int((aux/amount)*100))
@@ -285,7 +290,7 @@ class MyApp(QWidget):
         if(self.checkBox_close.isChecked()):
             self.close_excel_logs(collection_path)
         
-        self.plainTextEdit.appendPlainText('___________________________________________\n') 
+        self.plainTextEdit.appendPlainText('___________________________________________________________________\n') 
         self.show_info_messagebox("information", "Descarga realizada. Revise la carpeta de procesados.")
         
     def show_info_messagebox(self, type, content):
@@ -346,7 +351,13 @@ class MyApp(QWidget):
         date2 = self.dateedit2.date().toPyDate().strftime("%d-%m-%Y")
         
         data = pd.read_excel(path, skiprows=1)
-        filtered_data = data.set_index('Schedule Date')[date1:date2]
+        
+        try:
+            filtered_data = data.set_index('Schedule Date')[date1:date2]
+        except Exception as e:
+            print(e)
+            self.show_info_messagebox("error" ,"No se ha encontrado información en el último día de este canal.")
+            
         filtered_data.reset_index(inplace=True)
 
         amount_open_logs = 0
@@ -358,10 +369,10 @@ class MyApp(QWidget):
                 amount_open_logs += 1
             elif(item == 'Log cerrado'):
                 amount_closed_logs += 1
-                
-        filtered_data.loc[filtered_data['Title Name'].str.strip() == '', 'Title Name'] = filtered_data['Title Name English']
-        filtered_data.loc[(filtered_data['Episode Name'].str.strip() != '') & (filtered_data['Title Name'].str.strip() == '') , 'Title Name'] = filtered_data['Episode Name']
-        filtered_data.loc[(filtered_data['Episode Name English'].str.strip() != '') & (filtered_data['Title Name'].str.strip() == '') & (filtered_data['Episode Name'].str.strip() == ''), 'Title Name'] = filtered_data['Episode Name English']
+
+        filtered_data.loc[filtered_data['Title Name'].astype(str).str.strip() == '', 'Title Name'] = filtered_data['Title Name English']
+        filtered_data.loc[(filtered_data['Episode Name'].astype(str).str.strip() != '') & (filtered_data['Title Name'].astype(str).str.strip() == '') , 'Title Name'] = filtered_data['Episode Name']
+        filtered_data.loc[(filtered_data['Episode Name English'].astype(str).str.strip() != '') & (filtered_data['Title Name'].astype(str).str.strip() == '') & (filtered_data['Episode Name'].astype(str).str.strip() == ''), 'Title Name'] = filtered_data['Episode Name English']
         
         try: 
             for item in filtered_data["Title Name"]:
