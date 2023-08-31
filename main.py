@@ -5,7 +5,6 @@ from PyQt5.QtGui import QFont, QIcon
 import requests
 import pandas as pd
 import os 
-import time
 
 url_base = 'https://dailygrids.turnertapkit.com/shows.xls?'
 
@@ -30,14 +29,31 @@ channel_options = {
     'CN PAN':'CNLA_PAN',
     'CN PAN 2':'CNLA_PAN2',
     'Cartoonito PAN':'CTOOLA_PAN',
-    'Tooncast PAN':'TOONLA_PAN'
+    'Tooncast PAN':'TOONLA_PAN',
+    'Cinemax PAN': 'CINEMAX_PN',
+    'Cinemax Chile': 'CINEMAX_CH',
+    'Cinemax Sur': 'CINEMAX_SO',
+    'HBO 2 PANAM':'HBO_PA2',
+    'HBO 2 Mexico':'HBO_BM2',
+    'HBO Family PAN':'HBO_FPA',
+    'HBO Mundi Mexico':'HBO_MMO',
+    'HBO Mundi PAN':'HBO_MPA',
+    'HBO Plus Mexico':'HBO_HPMO',
+    'HBO Plus PAN':'HBO_HPPA',
+    'HBO Pop Mexico':'HBO_POM',
+    'HBO Pop PAN':'HBO_POP',
+    'HBO Signature PAN': 'HBO_SPA',
+    'HBO Xtreme Mexico':'HBO_XMO',
+    'HBO Xtreme PAN':'HBO_XPA',
+    'HBO Este': 'HBO_PAO',
+    'HBO Oeste': 'HBO_BMO'
 }
 
 class MyApp(QWidget):
     def __init__(self):
         super().__init__()
         self.setWindowTitle('Gestor de logs (Turner)')
-        self.setFixedSize(600, 700)
+        self.setFixedSize(850, 700)
         self.setWindowIcon(QIcon('favicon.ico'))
         layout = QGridLayout()
         self.setLayout(layout)
@@ -62,32 +78,32 @@ class MyApp(QWidget):
         self.tab1.layout.addWidget(self.checkBox_close, 0, 0)
         
         self.label_date_1 = QLabel("Fecha de inicio")
-        self.tab1.layout.addWidget(self.label_date_1, 0, 1)
+        self.tab1.layout.addWidget(self.label_date_1, 0, 2)
         
         self.label_date_2 = QLabel("Fecha de corte")
-        self.tab1.layout.addWidget(self.label_date_2, 0, 2)
+        self.tab1.layout.addWidget(self.label_date_2, 0, 3)
 
         self.button_open_folder = QPushButton("Ver procesados", self)
-        self.tab1.layout.addWidget(self.button_open_folder, 0, 3, 1, 1)
+        self.tab1.layout.addWidget(self.button_open_folder, 0, 4, 1, 1)
         self.button_open_folder.clicked.connect(self.open_folder_action)
 
         self.button_download = QPushButton("Descargar", self)
-        self.tab1.layout.addWidget(self.button_download, 1, 3, 1, 1)
+        self.tab1.layout.addWidget(self.button_download, 1, 4, 1, 1)
         
         self.button_download.clicked.connect(self.download_action)
         
         self.dateedit = QDateEdit(calendarPopup=True)
         self.dateedit.setDateTime(QDateTime.currentDateTime().addDays(1))
-        layout.addWidget(self.dateedit, 1, 1)
-        self.tab1.layout.addWidget(self.dateedit, 1, 1)
+        layout.addWidget(self.dateedit, 1, 2)
+        self.tab1.layout.addWidget(self.dateedit, 1, 2)
         
         self.dateedit2 = QDateEdit(calendarPopup=True)
         self.dateedit2.setDateTime(QDateTime.currentDateTime().addDays(1))
-        layout.addWidget(self.dateedit2, 1, 2)
-        self.tab1.layout.addWidget(self.dateedit2, 1, 2)
+        layout.addWidget(self.dateedit2, 1, 3)
+        self.tab1.layout.addWidget(self.dateedit2, 1, 3)
         
         self.separatorLine = QFrame(frameShape=QFrame.HLine)    
-        self.tab1.layout.addWidget(self.separatorLine, 2, 0, 1, 4)
+        self.tab1.layout.addWidget(self.separatorLine, 2, 0, 1, 5)
         
         self.checkBoxAll = QCheckBox('Seleccionar todos los canales')
         self.checkBoxAll.setChecked(False)
@@ -179,6 +195,63 @@ class MyApp(QWidget):
         self.checkBox_tooncast.setFont(QFont("Arial", 11, weight=QFont.Bold))
         self.checkBox_tooncast.stateChanged.connect(self.on_stateChanged_tooncast)
         self.checkBox_tooncast_A = QCheckBox('Tooncast PAN')
+
+        # Checkbox Cinemax
+        self.checkBox_cinemax = QCheckBox("Cinemax", self)
+        self.checkBox_cinemax.setFont(QFont("Arial", 11, weight=QFont.Bold))
+        self.checkBox_cinemax.stateChanged.connect(self.on_stateChanged_cinemax)
+        self.checkBox_cinemax_A = QCheckBox('Cinemax PAN')
+        self.checkBox_cinemax_B = QCheckBox('Cinemax Sur')
+        self.checkBox_cinemax_C = QCheckBox('Cinemax Chile')
+
+        ###############
+        ## FOUR ROW ##
+        ###############
+        self.checkBox_hbo2 = QCheckBox("HBO 2", self)
+        self.checkBox_hbo2.setFont(QFont("Arial", 11, weight=QFont.Bold))
+        self.checkBox_hbo2.stateChanged.connect(self.on_stateChanged_hbo2)
+        self.checkBox_hbo2_A = QCheckBox('HBO 2 PANAM')
+        self.checkBox_hbo2_B = QCheckBox('HBO 2 Mexico')
+
+        self.checkBox_hbofamily = QCheckBox("HBO Family", self)
+        self.checkBox_hbofamily.setFont(QFont("Arial", 11, weight=QFont.Bold))
+        self.checkBox_hbofamily.stateChanged.connect(self.on_stateChanged_hbofamily)
+        self.checkBox_hbofamily_A = QCheckBox('HBO Family PAN')
+
+        self.checkBox_hbomundi = QCheckBox("HBO Mundi", self)
+        self.checkBox_hbomundi.setFont(QFont("Arial", 11, weight=QFont.Bold))
+        self.checkBox_hbomundi.stateChanged.connect(self.on_stateChanged_hbomundi)
+        self.checkBox_hbomundi_A = QCheckBox('HBO Mundi Mexico')
+        self.checkBox_hbomundi_B = QCheckBox('HBO Mundi PAN')
+
+        self.checkBox_hboplus = QCheckBox("HBO Plus", self)
+        self.checkBox_hboplus.setFont(QFont("Arial", 11, weight=QFont.Bold))
+        self.checkBox_hboplus.stateChanged.connect(self.on_stateChanged_hboplus)
+        self.checkBox_hboplus_A = QCheckBox('HBO Plus Mexico')
+        self.checkBox_hboplus_B = QCheckBox('HBO Plus PAN')
+
+        self.checkBox_hbopop = QCheckBox("HBO Pop", self)
+        self.checkBox_hbopop.setFont(QFont("Arial", 11, weight=QFont.Bold))
+        self.checkBox_hbopop.stateChanged.connect(self.on_stateChanged_hbopop)
+        self.checkBox_hbopop_A = QCheckBox('HBO Pop Mexico')
+        self.checkBox_hbopop_B = QCheckBox('HBO Pop PAN')
+
+        self.checkBox_hbosignature = QCheckBox("HBO Signature", self)
+        self.checkBox_hbosignature.setFont(QFont("Arial", 11, weight=QFont.Bold))
+        self.checkBox_hbosignature.stateChanged.connect(self.on_stateChanged_hbosignature)
+        self.checkBox_hbosignature_A = QCheckBox('HBO Signature PAN')
+
+        self.checkBox_hboxtreme = QCheckBox("HBO Xtreme", self)
+        self.checkBox_hboxtreme.setFont(QFont("Arial", 11, weight=QFont.Bold))
+        self.checkBox_hboxtreme.stateChanged.connect(self.on_stateChanged_hboxtreme)
+        self.checkBox_hboxtreme_A = QCheckBox('HBO Xtreme Mexico')
+        self.checkBox_hboxtreme_B = QCheckBox('HBO Xtreme PAN')
+
+        self.checkBox_hbo= QCheckBox("HBO", self)
+        self.checkBox_hbo.setFont(QFont("Arial", 11, weight=QFont.Bold))
+        self.checkBox_hbo.stateChanged.connect(self.on_stateChanged_hbo)
+        self.checkBox_hbo_A = QCheckBox('HBO Este')
+        self.checkBox_hbo_B = QCheckBox('HBO Oeste')
         
         # Row distribution for checkboxes
         self.checkBoxes_firstRow =  [self.checkBox_tnt, 
@@ -214,8 +287,38 @@ class MyApp(QWidget):
                                     self.checkBox_cnito,
                                     self.checkBox_cnito_A,
                                     self.checkBox_tooncast,
-                                    self.checkBox_tooncast_A]
+                                    self.checkBox_tooncast_A,
+                                    self.checkBox_cinemax,
+                                    self.checkBox_cinemax_A,
+                                    self.checkBox_cinemax_B,
+                                    self.checkBox_cinemax_C]
         
+        self.checkBoxes_fourRow =   [self.checkBox_hbo2,
+                                    self.checkBox_hbo2_A,
+                                    self.checkBox_hbo2_B,
+                                    self.checkBox_hbofamily,
+                                    self.checkBox_hbofamily_A,
+                                    self.checkBox_hbomundi,
+                                    self.checkBox_hbomundi_A,
+                                    self.checkBox_hbomundi_B,
+                                    self.checkBox_hboplus,
+                                    self.checkBox_hboplus_A,
+                                    self.checkBox_hboplus_B]
+        
+        self.checkBoxes_fiveRow = [self.checkBox_hbopop,
+                                    self.checkBox_hbopop_A,
+                                    self.checkBox_hbopop_B,
+                                    self.checkBox_hbosignature,
+                                    self.checkBox_hbosignature_A,
+                                    self.checkBox_hboxtreme,
+                                    self.checkBox_hboxtreme_A,
+                                    self.checkBox_hboxtreme_B,
+                                    self.checkBox_hbo,
+                                    self.checkBox_hbo_A,
+                                    self.checkBox_hbo_B
+                                    ]
+                                    
+
         self.checkBox_all = [self.checkBox_tnt, self.checkBox_tnt_series, self.checkBox_space, self.checkBox_tbs, self.checkBox_tcm, self.checkBox_isat, self.checkBox_trutv, self.checkBox_glitz, self.checkBox_cn, self.checkBox_cnito, self.checkBox_tooncast]
         self.checkBoxes_tnt = [self.checkBox_tnt_A, self.checkBox_tnt_B, self.checkBox_tnt_C, self.checkBox_tnt_D]
         self.checkBoxes_tnt_series = [self.checkBox_tnt_series_A, self.checkBox_tnt_series_B]
@@ -228,9 +331,39 @@ class MyApp(QWidget):
         self.checkBoxes_cn = [self.checkBox_cn_A, self.checkBox_cn_B, self.checkBox_cn_C]
         self.checkBoxes_cnito = [self.checkBox_cnito_A]
         self.checkBoxes_tooncast = [self.checkBox_tooncast_A]
+        self.checkBoxes_cinemax = [self.checkBox_cinemax_A, self.checkBox_cinemax_B, self.checkBox_cinemax_C]
+        self.checkBoxes_hbo2 = [self.checkBox_hbo2_A, self.checkBox_hbo2_B]
+        self.checkBoxes_hbofamily = [self.checkBox_hbofamily_A]
+        self.checkBoxes_hbomundi = [self.checkBox_hbomundi_A, self.checkBox_hbomundi_B]
+        self.checkBoxes_hboplus = [self.checkBox_hboplus_A, self.checkBox_hboplus_B]
+        self.checkBoxes_hbopop = [self.checkBox_hbopop_A, self.checkBox_hbopop_B]
+        self.checkBoxes_hbosignature = [self.checkBox_hbosignature_A]
+        self.checkBoxes_hboxtreme = [self.checkBox_hboxtreme_A, self.checkBox_hboxtreme_B]
+        self.checkBoxes_hbo = [self.checkBox_hbo_A, self.checkBox_hbo_B]
         
-        self.full_list = self.checkBoxes_tnt+self.checkBoxes_tnt_series+self.checkBoxes_space+ self.checkBoxes_tbs + self.checkBoxes_tcm + self.checkBoxes_isat + self.checkBoxes_trutv + self.checkBoxes_glitz + self.checkBoxes_cn + self.checkBoxes_cnito + self.checkBoxes_tooncast
-    
+        self.full_list = (
+            self.checkBoxes_tnt +
+            self.checkBoxes_tnt_series +
+            self.checkBoxes_space +
+            self.checkBoxes_tbs +
+            self.checkBoxes_tcm +
+            self.checkBoxes_isat +
+            self.checkBoxes_trutv +
+            self.checkBoxes_glitz +
+            self.checkBoxes_cn +
+            self.checkBoxes_cnito +
+            self.checkBoxes_tooncast +
+            self.checkBoxes_cinemax +
+            self.checkBoxes_hbo2 +
+            self.checkBoxes_hbofamily +
+            self.checkBoxes_hbomundi +
+            self.checkBoxes_hboplus +
+            self.checkBoxes_hbopop +
+            self.checkBoxes_hbosignature +
+            self.checkBoxes_hboxtreme +
+            self.checkBoxes_hbo
+        )    
+
         for index, item in enumerate(self.checkBoxes_firstRow):
             self.tab1.layout.addWidget(item, index+4, 0)
 
@@ -239,19 +372,25 @@ class MyApp(QWidget):
             
         for index, item in enumerate(self.checkBoxes_thirdRow):
             self.tab1.layout.addWidget(item, index+4, 2)
+
+        for index, item in enumerate(self.checkBoxes_fourRow):
+            self.tab1.layout.addWidget(item, index+4, 3)
+
+        for index, item in enumerate(self.checkBoxes_fiveRow):
+            self.tab1.layout.addWidget(item, index+4, 4)
         
         self.plainTextEdit = QPlainTextEdit()
         self.plainTextEdit.setPlaceholderText("No hay información disponible para su visualización")
         self.plainTextEdit.setReadOnly(True)
         
         self.separatorLine2 = QFrame(frameShape=QFrame.HLine)    
-        self.tab1.layout.addWidget(self.separatorLine2, 17, 0, 1, 4)
+        self.tab1.layout.addWidget(self.separatorLine2, 17, 0, 1, 5)
         
         self.pbar = QProgressBar(self)
         self.pbar.setGeometry(30, 40, 200, 25)
-        self.tab1.layout.addWidget(self.pbar, 20, 0, 2, 4)
+        self.tab1.layout.addWidget(self.pbar, 20, 0, 2, 5)
 
-        self.tab1.layout.addWidget(self.plainTextEdit, 22, 0, 5, 4)
+        self.tab1.layout.addWidget(self.plainTextEdit, 22, 0, 5, 5)
             
     # Button actions
     
@@ -444,6 +583,42 @@ class MyApp(QWidget):
         for checkBox in self.checkBoxes_tooncast:
             checkBox.setCheckState(state)
             
+    def on_stateChanged_cinemax(self, state):
+        for checkBox in self.checkBoxes_cinemax:
+            checkBox.setCheckState(state)
+
+    def on_stateChanged_hbo2(self, state):
+        for checkBox in self.checkBoxes_hbo2:
+            checkBox.setCheckState(state)
+
+    def on_stateChanged_hbofamily(self, state):
+        for checkBox in self.checkBoxes_hbofamily:
+            checkBox.setCheckState(state)
+
+    def on_stateChanged_hbomundi(self, state):
+        for checkBox in self.checkBoxes_hbomundi:
+            checkBox.setCheckState(state)
+
+    def on_stateChanged_hboplus(self, state):
+        for checkBox in self.checkBoxes_hboplus:
+            checkBox.setCheckState(state)
+
+    def on_stateChanged_hbopop(self, state):
+        for checkBox in self.checkBoxes_hbopop:
+            checkBox.setCheckState(state)
+
+    def on_stateChanged_hbosignature(self, state):
+        for checkBox in self.checkBoxes_hbosignature:
+            checkBox.setCheckState(state)
+
+    def on_stateChanged_hboxtreme(self, state):
+        for checkBox in self.checkBoxes_hboxtreme:
+            checkBox.setCheckState(state)
+
+    def on_stateChanged_hbo(self, state):
+        for checkBox in self.checkBoxes_hbo:
+            checkBox.setCheckState(state)
+
 if __name__ == '__main__':
     QApplication.setAttribute(Qt.HighDpiScaleFactorRoundingPolicy.PassThrough)
 
